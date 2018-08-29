@@ -28,4 +28,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+private:
+	TArray<TArray<float>> generateHeightmap(int width, int height);
+	TArray<FVector> generateVertices(TArray<TArray<float>> heightmap);
+	TArray<int32> generateTriangles(int32 width, int32 height);
 };

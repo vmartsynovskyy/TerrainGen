@@ -1,0 +1,11 @@
+# Ignore Visual Studio config
+.vs/*
+
+# Ignore binary files
+Binaries/*
+Saved/*
+Intermediate/*
+DerivedDataCache/*
+
+*.sdf
+*.suo

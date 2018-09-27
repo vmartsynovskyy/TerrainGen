@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ProceduralTerrainChunk.h"
+#include "FastNoise.h"
+#include <stdlib.h>
 
 
 // Sets default values
@@ -13,20 +15,18 @@ AProceduralTerrainChunk::AProceduralTerrainChunk()
 	RootComponent = procMesh;
 }
 
-// Called when the game starts or when spawned
-void AProceduralTerrainChunk::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int height) {
 	TArray<TArray<float>> xArray;
+
+	FastNoise myNoise;
+	myNoise.SetSeed(rand());
+	myNoise.SetNoiseType(FastNoise::SimplexFractal);
+
+
 	for (int x = 0; x < height; x++) {
 		TArray<float> yArray;
 		for (int y = 0; y < height; y++) {
-			// TODO: use Simplex rather than all 0's
-			yArray.Add(0.0);
+			yArray.Add(myNoise.GetNoise(x, y) * this->scaleFactor);
 		}
 		xArray.Add(yArray);
 	}
@@ -100,6 +100,24 @@ TArray<int32> AProceduralTerrainChunk::generateTriangles(int32 width, int32 heig
 // Called when the actor is created
 void AProceduralTerrainChunk::PostActorCreated()
 {
+	CreateRandomMeshComponent();
+}
+
+// Called when the game starts or when spawned
+void AProceduralTerrainChunk::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+// Called every frame
+void AProceduralTerrainChunk::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+void AProceduralTerrainChunk::CreateRandomMeshComponent()
+{
 	TArray<TArray<float>> heightmap = generateHeightmap(100, 100);
 	TArray<FVector> vertices = generateVertices(heightmap);
 	TArray<int32> triangles = generateTriangles(100, 100);
@@ -108,12 +126,5 @@ void AProceduralTerrainChunk::PostActorCreated()
 	TArray<FLinearColor> colors;
 	TArray<FProcMeshTangent> tangents;
 	procMesh->CreateMeshSection_LinearColor(0, vertices, triangles, normals, uv0, colors, tangents, true);
-}
-
-// Called every frame
-void AProceduralTerrainChunk::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 

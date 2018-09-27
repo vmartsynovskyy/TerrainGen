@@ -25,9 +25,13 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UProceduralMeshComponent* procMesh;
 
+	UPROPERTY(EditAnywhere)
+	float scaleFactor = 100.0f;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void CreateRandomMeshComponent();
 private:
 	TArray<TArray<float>> generateHeightmap(int width, int height);
 	TArray<FVector> generateVertices(TArray<TArray<float>> heightmap);

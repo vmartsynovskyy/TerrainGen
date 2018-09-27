@@ -55,6 +55,13 @@ TArray<FVector> AProceduralTerrainChunk::generateVertices(TArray<TArray<float>> 
 	return vertices;
 }
 
+TArray<FVector> generateNormals(TArray<TArray<float>> heightmap) {
+	TArray<FVector> normals;
+	normals.SetNum(heightmap.Num() * heightmap[0].Num());
+	// TODO: Implement
+	return normals;
+}
+
 /**
 *   \brief Generates triangles given the dimensions of a rectangular heightmap.
 *
@@ -67,7 +74,7 @@ TArray<FVector> AProceduralTerrainChunk::generateVertices(TArray<TArray<float>> 
 *
 **/
 TArray<int32> AProceduralTerrainChunk::generateTriangles(int32 width, int32 height) {
-	// TArray<TArray<float>> heightmap must be a rectang
+	// TArray<TArray<float>> heightmap must be a rectangle
 	TArray<int32> triangles;
 	for (int x = 0; x < width - 1; x++) {
 		for (int y = 0; y < height - 1; y++) {
@@ -96,7 +103,7 @@ void AProceduralTerrainChunk::PostActorCreated()
 	TArray<TArray<float>> heightmap = generateHeightmap(100, 100);
 	TArray<FVector> vertices = generateVertices(heightmap);
 	TArray<int32> triangles = generateTriangles(100, 100);
-	TArray<FVector> normals;
+	TArray<FVector> normals = generateNormals(heightmap);
 	TArray<FVector2D> uv0;
 	TArray<FLinearColor> colors;
 	TArray<FProcMeshTangent> tangents;

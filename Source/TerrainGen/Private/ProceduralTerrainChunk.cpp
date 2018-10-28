@@ -26,7 +26,7 @@ TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int 
 	for (int x = 0; x < height; x++) {
 		TArray<float> yArray;
 		for (int y = 0; y < height; y++) {
-			yArray.Add(myNoise.GetNoise(x, y) * this->scaleFactor);
+			yArray.Add(myNoise.GetNoise(x, y) * heightScale);
 		}
 		xArray.Add(yArray);
 	}
@@ -44,21 +44,63 @@ TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int 
 *
 **/
 TArray<FVector> AProceduralTerrainChunk::generateVertices(TArray<TArray<float>> heightmap) {
-	// TArray<TArray<float>> heightmap must be a rectang
+	// TArray<TArray<float>> heightmap must be a rectangle
 	TArray<FVector> vertices;
-	const int scaleFactor = 10;
-	for (int x = 0; x < heightmap.Num(); x++) {
-		for (int y = 0; y < heightmap[0].Num(); y++) {
-			vertices.Add(FVector(x*scaleFactor, y*scaleFactor, heightmap[x][y]));
+	for (int x = 1; x < heightmap.Num() - 1; x++) {
+		for (int y = 1; y < heightmap[0].Num() - 1; y++) {
+			vertices.Add(FVector((x-1)*widthScale, (y-1)*widthScale, heightmap[x][y]));
 		}
 	}
 	return vertices;
 }
 
-TArray<FVector> generateNormals(TArray<TArray<float>> heightmap) {
+TArray<FVector> AProceduralTerrainChunk::generateNormals(TArray<FVector> verts, TArray<TArray<float>> hMap, int width, int height) {
 	TArray<FVector> normals;
-	normals.SetNum(heightmap.Num() * heightmap[0].Num());
-	// TODO: Implement
+	for (int x = 0; x < width; x++)
+	{
+		for (int y = 0; y < height; y++) {
+			// based on triangle ordering above
+			int centerInd = x * height + y;
+			int leftInd = centerInd - height;
+			int rightInd = centerInd + height;
+			int topRightInd = rightInd - 1;
+			int bottomLeftInd = leftInd + 1;
+			int topInd = centerInd - 1;
+			int bottomInd = centerInd + 1;
+
+			FVector topLeftCross;
+			FVector topRightUpperCross;
+			FVector topRightLowerCross;
+			FVector bottomRightCross;
+			FVector bottomLeftLowerCross;
+			FVector bottomLeftUpperCross;
+			
+			// we must check if the index is within bounds, otherwise we must generate new vertices from the heightmap
+			// in order to have seamless edges
+			// if it's in bounds then we can just use the vertices we already generated
+			FVector centerVert = verts[centerInd];
+			FVector leftVert = (x - 1 > 0 && x - 1 < width) ? verts[leftInd] : FVector((x-1)*widthScale, (y)*widthScale, hMap[x][y+1]);
+			FVector rightVert = (x + 1 > 0 && x + 1 < width) ? verts[rightInd] : FVector((x+1)*widthScale, (y)*widthScale, hMap[x+2][y+1]);
+			FVector topRightVert = (x + 1 > 0 && x + 1 < width && y - 1 > 0 && y - 1 < height) ? verts[topRightInd] : FVector((x+1)*widthScale, (y-1)*widthScale, hMap[x+2][y]);
+			FVector bottomLeftVert = (x - 1 > 0 && x - 1 < width && y + 1 > 0 && y + 1 < height) ? verts[bottomLeftInd] : FVector((x-1)*widthScale, (y+1)*widthScale, hMap[x][y+2]);
+			FVector topVert = (y - 1 > 0 && y - 1 < height) ? verts[topInd] : FVector((x)*widthScale, (y-1)*widthScale, hMap[x+1][y]);
+			FVector bottomVert = (y + 1 > 0 && y + 1 < height) ? verts[bottomInd] : FVector((x)*widthScale, (y+1)*widthScale, hMap[x+1][y+2]);
+			
+
+			// we calculate the normals of each side, sum them, and normalize to get normal vectors for a vertex
+			topLeftCross = FVector::CrossProduct(topVert - centerVert, leftVert - centerVert);
+			bottomLeftLowerCross = FVector::CrossProduct(centerVert - bottomVert, bottomVert - bottomLeftVert);
+			bottomLeftUpperCross = FVector::CrossProduct(leftVert - bottomLeftVert, centerVert - leftVert);
+			topRightUpperCross = FVector::CrossProduct(topVert - centerVert, topRightVert - centerVert);
+			topRightLowerCross = FVector::CrossProduct(topRightVert - rightVert, rightVert - centerVert);
+			bottomRightCross = FVector::CrossProduct(centerVert - bottomVert, rightVert - centerVert);
+
+			FVector normal = topLeftCross + topRightUpperCross + topRightLowerCross + bottomRightCross + bottomLeftLowerCross + bottomLeftUpperCross;
+			normal.Normalize();
+			normals.Add(normal);
+		}
+	}
+	 
 	return normals;
 }
 
@@ -97,6 +139,19 @@ TArray<int32> AProceduralTerrainChunk::generateTriangles(int32 width, int32 heig
 	return triangles;
 }
 
+TArray<FVector2D> AProceduralTerrainChunk::generateUV(int width, int height) {
+	TArray<FVector2D> uv;
+	for (int32 x = 0; x < width; x++)
+	{
+		for (int32 y = 0; y < height; y++) {
+			FVector2D uvVert = FVector2D(x, y);
+			uv.Add(uvVert);
+		}
+	}
+
+	return uv;
+}
+
 // Called when the actor is created
 void AProceduralTerrainChunk::PostActorCreated()
 {
@@ -118,11 +173,11 @@ void AProceduralTerrainChunk::Tick(float DeltaTime)
 
 void AProceduralTerrainChunk::CreateRandomMeshComponent()
 {
-	TArray<TArray<float>> heightmap = generateHeightmap(100, 100);
+	TArray<TArray<float>> heightmap = generateHeightmap(102, 102);
 	TArray<FVector> vertices = generateVertices(heightmap);
 	TArray<int32> triangles = generateTriangles(100, 100);
-	TArray<FVector> normals = generateNormals(heightmap);
-	TArray<FVector2D> uv0;
+	TArray<FVector> normals = generateNormals(vertices, heightmap, 100, 100);
+	TArray<FVector2D> uv0 = generateUV(100, 100);
 	TArray<FLinearColor> colors;
 	TArray<FProcMeshTangent> tangents;
 	procMesh->CreateMeshSection_LinearColor(0, vertices, triangles, normals, uv0, colors, tangents, true);

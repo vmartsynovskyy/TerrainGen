@@ -26,7 +26,10 @@ protected:
 	UProceduralMeshComponent* procMesh;
 
 	UPROPERTY(EditAnywhere)
-	float scaleFactor = 100.0f;
+	float heightScale = 100.0f;
+
+	UPROPERTY(EditAnywhere)
+	float widthScale = 10.0f;
 
 public:	
 	// Called every frame
@@ -35,5 +38,7 @@ public:
 private:
 	TArray<TArray<float>> generateHeightmap(int width, int height);
 	TArray<FVector> generateVertices(TArray<TArray<float>> heightmap);
+	TArray<FVector> generateNormals(TArray<FVector> verts, TArray<TArray<float>> hMap, int width, int height);
 	TArray<int32> generateTriangles(int32 width, int32 height);
+	TArray<FVector2D> generateUV(int width, int height);
 };

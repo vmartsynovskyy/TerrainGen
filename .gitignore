@@ -6,6 +6,7 @@ Binaries/*
 Saved/*
 Intermediate/*
 DerivedDataCache/*
+Build/*
 
 *.sdf
 *.suo

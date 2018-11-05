@@ -19,13 +19,13 @@ TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int 
 	TArray<TArray<float>> xArray;
 
 	FastNoise myNoise;
-	myNoise.SetSeed(rand());
+	myNoise.SetSeed(Seed);
 	myNoise.SetNoiseType(FastNoise::SimplexFractal);
 
 
-	for (int x = 0; x < height; x++) {
+	for (int x = xStart; x < xStart + width; x++) {
 		TArray<float> yArray;
-		for (int y = 0; y < height; y++) {
+		for (int y = yStart; y < yStart + height; y++) {
 			yArray.Add(myNoise.GetNoise(x, y) * heightScale);
 		}
 		xArray.Add(yArray);
@@ -155,13 +155,15 @@ TArray<FVector2D> AProceduralTerrainChunk::generateUV(int width, int height) {
 // Called when the actor is created
 void AProceduralTerrainChunk::PostActorCreated()
 {
-	CreateRandomMeshComponent();
+	
 }
 
 // Called when the game starts or when spawned
 void AProceduralTerrainChunk::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CreateRandomMeshComponent();
 }
 
 // Called every frame
@@ -173,13 +175,30 @@ void AProceduralTerrainChunk::Tick(float DeltaTime)
 
 void AProceduralTerrainChunk::CreateRandomMeshComponent()
 {
-	TArray<TArray<float>> heightmap = generateHeightmap(102, 102);
+	heightmap = generateHeightmap(heightMapLength + 2, heightMapLength + 2);
 	TArray<FVector> vertices = generateVertices(heightmap);
-	TArray<int32> triangles = generateTriangles(100, 100);
-	TArray<FVector> normals = generateNormals(vertices, heightmap, 100, 100);
-	TArray<FVector2D> uv0 = generateUV(100, 100);
+	TArray<int32> triangles = generateTriangles(heightMapLength, heightMapLength);
+	TArray<FVector> normals = generateNormals(vertices, heightmap, heightMapLength, heightMapLength);
+	TArray<FVector2D> uv0 = generateUV(heightMapLength, heightMapLength);
 	TArray<FLinearColor> colors;
 	TArray<FProcMeshTangent> tangents;
 	procMesh->CreateMeshSection_LinearColor(0, vertices, triangles, normals, uv0, colors, tangents, true);
 }
 
+/**
+*   \brief Sets the size of the chunk based on the resolution.
+*   \param width The width of the chunk in UE4 units
+*   \param resolution Number of faces on edges per 64 UE4 units
+*   \return Returns the heightMap length
+*
+**/
+int AProceduralTerrainChunk::SetSizeAndResolution(float width, int resolution = 5) {
+	widthScale = 64 / resolution;
+	heightMapLength = width / widthScale + 1;
+	return heightMapLength;
+}
+
+void AProceduralTerrainChunk::SetXandYStart(int xStart, int yStart) {
+	this->xStart = xStart;
+	this->yStart = yStart;
+}

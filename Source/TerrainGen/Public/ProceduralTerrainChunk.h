@@ -31,11 +31,22 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float widthScale = 10.0f;
 
-public:	
+public:
+	int Seed = 1337;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void CreateRandomMeshComponent();
+
+	int SetSizeAndResolution(float size, int resolution);
+	void SetXandYStart(int xStart, int yStart);
+
 private:
+	int heightMapLength = 100;
+	int xStart = 0;
+	int yStart = 0;
+	TArray<TArray<float>> heightmap;
+
 	TArray<TArray<float>> generateHeightmap(int width, int height);
 	TArray<FVector> generateVertices(TArray<TArray<float>> heightmap);
 	TArray<FVector> generateNormals(TArray<FVector> verts, TArray<TArray<float>> hMap, int width, int height);

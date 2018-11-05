@@ -17,8 +17,9 @@ public:
 	// Sets default values for this actor's properties
 	AProceduralTerrain();
 
-	float ChunkSize = 1024.0f;
+	float ChunkSize = 256.0f;
 	int ChunkResolution = 4;
+	int Seed;
 
 	float RenderRadius = 10000.0f;
 
@@ -29,4 +30,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+private:
+	TMap<TPair<int, int>, AProceduralTerrainChunk*> chunkMap;
+	void spawnChunk(int x, int y);
+	void destroyChunk(AProceduralTerrainChunk* chunk);
+	void cullAndSpawnChunks(FVector2D playerLocation);
 };

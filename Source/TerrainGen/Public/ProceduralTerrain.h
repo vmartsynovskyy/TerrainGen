@@ -17,11 +17,14 @@ public:
 	// Sets default values for this actor's properties
 	AProceduralTerrain();
 
+	UPROPERTY(EditAnywhere)
 	float ChunkSize = 256.0f;
+	UPROPERTY(EditAnywhere)
 	int ChunkResolution = 4;
-	int Seed;
-
+	UPROPERTY(EditAnywhere)
 	float RenderRadius = 10000.0f;
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* TerrainMaterial;
 
 protected:
 	// Called when the game starts or when spawned
@@ -32,6 +35,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 private:
 	TMap<TPair<int, int>, AProceduralTerrainChunk*> chunkMap;
+	int seed;
 	void spawnChunk(int x, int y);
 	void destroyChunk(AProceduralTerrainChunk* chunk);
 	void cullAndSpawnChunks(FVector2D playerLocation);

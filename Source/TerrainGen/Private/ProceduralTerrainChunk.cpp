@@ -182,7 +182,7 @@ void AProceduralTerrainChunk::CreateRandomMeshComponent()
 	TArray<FVector2D> uv0 = generateUV(heightMapLength, heightMapLength);
 	TArray<FLinearColor> colors;
 	TArray<FProcMeshTangent> tangents;
-	procMesh->CreateMeshSection_LinearColor(0, vertices, triangles, normals, uv0, colors, tangents, true);
+	procMesh->CreateMeshSection_LinearColor(0, vertices, triangles, normals, uv0, colors, tangents, false);
 }
 
 /**
@@ -201,4 +201,8 @@ int AProceduralTerrainChunk::SetSizeAndResolution(float width, int resolution = 
 void AProceduralTerrainChunk::SetXandYStart(int xStart, int yStart) {
 	this->xStart = xStart;
 	this->yStart = yStart;
+}
+
+void AProceduralTerrainChunk::SetMaterialForProcMesh(UMaterialInterface* material) {
+	procMesh->SetMaterial(0, material);
 }

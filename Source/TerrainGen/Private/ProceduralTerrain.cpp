@@ -9,7 +9,7 @@ AProceduralTerrain::AProceduralTerrain()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	Seed = rand();
+	seed = rand();
 }
 
 // Called when the game starts or when spawned
@@ -35,7 +35,8 @@ void AProceduralTerrain::spawnChunk(int x, int y) {
 		auto chunk = GetWorld()->SpawnActorDeferred<AProceduralTerrainChunk>(AProceduralTerrainChunk::StaticClass(), spawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 		int hMapLen = chunk->SetSizeAndResolution(ChunkSize, ChunkResolution);
 		chunk->SetXandYStart(x*(hMapLen - 1), y*(hMapLen - 1));
-		chunk->Seed = Seed;
+		chunk->Seed = seed;
+		chunk->SetMaterialForProcMesh(TerrainMaterial);
 		chunk->FinishSpawning(spawnTransform);
 		chunkMap.Add(TPair<int, int>(x, y), chunk);
 	}

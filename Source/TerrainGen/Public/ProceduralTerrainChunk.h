@@ -40,6 +40,7 @@ public:
 
 	int SetSizeAndResolution(float size, int resolution);
 	void SetXandYStart(int xStart, int yStart);
+	void SetMaterialForProcMesh(UMaterialInterface* material);
 
 private:
 	int heightMapLength = 100;

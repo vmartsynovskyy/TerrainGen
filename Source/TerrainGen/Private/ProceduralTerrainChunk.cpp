@@ -15,6 +15,10 @@ AProceduralTerrainChunk::AProceduralTerrainChunk()
 	RootComponent = procMesh;
 }
 
+void AProceduralTerrainChunk::Destroyed() {
+	procMesh->DestroyComponent();
+}
+
 TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int height) {
 	TArray<TArray<float>> xArray;
 
@@ -175,7 +179,7 @@ void AProceduralTerrainChunk::Tick(float DeltaTime)
 
 void AProceduralTerrainChunk::CreateRandomMeshComponent()
 {
-	heightmap = generateHeightmap(heightMapLength + 2, heightMapLength + 2);
+	TArray<TArray<float>> heightmap = generateHeightmap(heightMapLength + 2, heightMapLength + 2);
 	TArray<FVector> vertices = generateVertices(heightmap);
 	TArray<int32> triangles = generateTriangles(heightMapLength, heightMapLength);
 	TArray<FVector> normals = generateNormals(vertices, heightmap, heightMapLength, heightMapLength);

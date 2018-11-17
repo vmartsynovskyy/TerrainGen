@@ -78,3 +78,11 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 	chunkMap.Compact();
 	chunkMap.Shrink();
 }
+
+void AProceduralTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) {
+	// destroy all chunks so that they can be regenerated with new properties
+	for (auto& Elem : chunkMap) {
+		Elem.Value->Destroy();
+		chunkMap.Remove(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
+	}
+}

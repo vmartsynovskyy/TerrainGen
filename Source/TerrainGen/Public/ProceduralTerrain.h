@@ -20,6 +20,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ChunkSize = 256.0f;
 	UPROPERTY(EditAnywhere)
+	float HeightScale = 256.0f;
+	UPROPERTY(EditAnywhere)
 	int ChunkResolution = 4;
 	UPROPERTY(EditAnywhere)
 	float RenderRadius = 10000.0f;

@@ -34,9 +34,11 @@ void AProceduralTerrain::spawnChunk(int x, int y) {
 		spawnTransform.SetTranslation(FVector(x*ChunkSize, y*ChunkSize, 0));
 		auto chunk = GetWorld()->SpawnActorDeferred<AProceduralTerrainChunk>(AProceduralTerrainChunk::StaticClass(), spawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 		int hMapLen = chunk->SetSizeAndResolution(ChunkSize, ChunkResolution);
-		chunk->SetXandYStart(x*(hMapLen - 1), y*(hMapLen - 1));
+		chunk->SetXandYStart(x*(hMapLen-1), y*(hMapLen-1));
 		chunk->Seed = seed;
+		chunk->heightScale = HeightScale;
 		chunk->SetMaterialForProcMesh(TerrainMaterial);
+		chunk->CreateRandomMeshComponent();
 		chunk->FinishSpawning(spawnTransform);
 		chunkMap.Add(TPair<int, int>(x, y), chunk);
 	}

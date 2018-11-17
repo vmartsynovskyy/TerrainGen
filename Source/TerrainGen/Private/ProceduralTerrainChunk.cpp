@@ -25,11 +25,11 @@ TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int 
 	FastNoise myNoise;
 	myNoise.SetSeed(Seed);
 	myNoise.SetNoiseType(FastNoise::SimplexFractal);
+	myNoise.SetFrequency(0.000625);
 
-
-	for (int x = xStart; x < xStart + width; x++) {
+	for (int x = xStart; x < xStart + (heightMapLength+2) * resolutionFactor; x += resolutionFactor) {
 		TArray<float> yArray;
-		for (int y = yStart; y < yStart + height; y++) {
+		for (int y = yStart; y < yStart + (heightMapLength+2) * resolutionFactor; y += resolutionFactor) {
 			yArray.Add(myNoise.GetNoise(x, y) * heightScale);
 		}
 		xArray.Add(yArray);
@@ -166,8 +166,6 @@ void AProceduralTerrainChunk::PostActorCreated()
 void AProceduralTerrainChunk::BeginPlay()
 {
 	Super::BeginPlay();
-
-	CreateRandomMeshComponent();
 }
 
 // Called every frame
@@ -196,10 +194,11 @@ void AProceduralTerrainChunk::CreateRandomMeshComponent()
 *   \return Returns the heightMap length
 *
 **/
-int AProceduralTerrainChunk::SetSizeAndResolution(float width, int resolution = 5) {
+int AProceduralTerrainChunk::SetSizeAndResolution(float width, int resolution = 4) {
 	widthScale = 64 / resolution;
 	heightMapLength = width / widthScale + 1;
-	return heightMapLength;
+	resolutionFactor = 4096 / heightMapLength;
+	return (heightMapLength-1) * resolutionFactor;
 }
 
 void AProceduralTerrainChunk::SetXandYStart(int xStart, int yStart) {

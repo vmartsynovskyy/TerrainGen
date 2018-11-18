@@ -2,7 +2,6 @@
 
 #include "ProceduralTerrain.h"
 
-
 // Sets default values
 AProceduralTerrain::AProceduralTerrain()
 {
@@ -29,22 +28,15 @@ void AProceduralTerrain::Tick(float DeltaTime)
 void AProceduralTerrain::spawnChunk(int x, int y) {
 	// first, check if this chunk has already been spawned
 	TPair<int, int> chunkPos(x, y);
+	int lastDistance = 0;
 	if (!chunkMap.Contains(chunkPos)) {
-		FTransform spawnTransform;
-		spawnTransform.SetTranslation(FVector(x*ChunkSize, y*ChunkSize, 0));
-		auto chunk = GetWorld()->SpawnActorDeferred<AProceduralTerrainChunk>(AProceduralTerrainChunk::StaticClass(), spawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-		int hMapLen = chunk->SetSizeAndResolution(ChunkSize, ChunkResolution);
-		chunk->SetXandYStart(x*(hMapLen-1), y*(hMapLen-1));
-		chunk->Seed = seed;
-		chunk->HeightScale = HeightScale;
-		chunk->WidthScale = WidthScale;
-		chunk->SetMaterialForProcMesh(TerrainMaterial);
-		chunk->TerrainCurve = TerrainCurve;
-
-		chunk->CreateRandomMeshComponent();
-
-		chunk->FinishSpawning(spawnTransform);
-		chunkMap.Add(TPair<int, int>(x, y), chunk);
+		auto procMesh = NewObject<UProceduralMeshComponent>(this);
+		auto floatFunc = static_cast<float(*)(float)>([](float f) { return f; });
+		ChunkInfo chunkInfo;
+		chunkInfo.GenerateChunk(x*(lastDistance - 1), y*(lastDistance - 1), ChunkResolution, ChunkSize, floatFunc);
+		procMesh->CreateMeshSection_LinearColor(0, chunkInfo.GetVertices(), chunkInfo.GetTriangles(), chunkInfo.GetNormals(), chunkInfo.GetUVMap(), chunkInfo.GetColors(), chunkInfo.GetTangents(), false);
+		procMesh->SetMaterial(0, TerrainMaterial);
+		chunkMap.Add(TPair<int, int>(x, y), procMesh);
 	}
 }
 
@@ -80,9 +72,9 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 	}
 
 	for (auto chunk : chunksToRemove) {
-		AProceduralTerrainChunk* chunkPtr = *(chunkMap.Find(chunk));
+		auto chunkPtr = *(chunkMap.Find(chunk));
 		chunkMap.Remove(chunk);
-		chunkPtr->Destroy();
+		chunkPtr->DestroyComponent();
 	}
 
 	chunkMap.Compact();
@@ -92,7 +84,7 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 void AProceduralTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) {
 	// destroy all chunks so that they can be regenerated with new properties
 	for (auto& Elem : chunkMap) {
-		Elem.Value->Destroy();
+		Elem.Value->DestroyComponent();
 		chunkMap.Remove(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
 	}
 }

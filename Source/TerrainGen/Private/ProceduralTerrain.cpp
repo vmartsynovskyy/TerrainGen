@@ -65,14 +65,19 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 	}
 
 	// cull chunks
+	TArray<TPair<int, int>> chunksToRemove;
 	for (auto& Elem : chunkMap) {
 		// pythagoras
 		float distanceFromPlayerSquare = powf((Elem.Key.Key*ChunkSize - playerLocation.X), 2) + powf((Elem.Key.Value*ChunkSize - playerLocation.Y), 2);
 		// destroy chunk if its further than the render radius
 		if ((distanceFromPlayerSquare + 10000.0f) > renderRadiusSquare) {
 			Elem.Value->Destroy();
-			chunkMap.Remove(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
+			chunksToRemove.Add(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
 		}
+	}
+
+	for (auto chunk : chunksToRemove) {
+		chunkMap.Remove(chunk);
 	}
 
 	chunkMap.Compact();

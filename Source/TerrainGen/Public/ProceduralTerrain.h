@@ -47,6 +47,7 @@ private:
 	TMap<TPair<int, int>, UProceduralMeshComponent*> chunkMap;
 	FastNoise noiseGen;
 	int seed;
+	int heightmapLen = 0;
 	void spawnChunk(int x, int y);
 	void destroyChunk(UProceduralMeshComponent* chunk);
 	void cullAndSpawnChunks(FVector2D playerLocation);

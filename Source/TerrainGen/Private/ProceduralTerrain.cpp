@@ -28,14 +28,21 @@ void AProceduralTerrain::Tick(float DeltaTime)
 void AProceduralTerrain::spawnChunk(int x, int y) {
 	// first, check if this chunk has already been spawned
 	TPair<int, int> chunkPos(x, y);
-	int lastDistance = 0;
 	if (!chunkMap.Contains(chunkPos)) {
 		auto procMesh = NewObject<UProceduralMeshComponent>(this);
-		auto floatFunc = static_cast<float(*)(float)>([](float f) { return f; });
+		FastNoise noiseGen;
+		noiseGen.SetSeed(seed);
+		noiseGen.SetNoiseType(FastNoise::SimplexFractal);
+		noiseGen.SetFrequency(0.000625 * WidthScale);
+		noiseGen.SetFractalOctaves(6);
 		ChunkInfo chunkInfo;
-		chunkInfo.GenerateChunk(x*(lastDistance - 1), y*(lastDistance - 1), ChunkResolution, ChunkSize, floatFunc);
+		chunkInfo.GenerateChunk(x*(heightmapLen - 1), y*(heightmapLen - 1), ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale);
+		heightmapLen = chunkInfo.GetDistanceTraversed();
+		auto world = this->GetWorld();
+		procMesh->SetWorldLocation(FVector(x*ChunkSize, y*ChunkSize, 0));
 		procMesh->CreateMeshSection_LinearColor(0, chunkInfo.GetVertices(), chunkInfo.GetTriangles(), chunkInfo.GetNormals(), chunkInfo.GetUVMap(), chunkInfo.GetColors(), chunkInfo.GetTangents(), false);
 		procMesh->SetMaterial(0, TerrainMaterial);
+		procMesh->RegisterComponentWithWorld(world);
 		chunkMap.Add(TPair<int, int>(x, y), procMesh);
 	}
 }

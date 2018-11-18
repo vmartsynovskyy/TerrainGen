@@ -1,14 +1,16 @@
 #include "ChunkInfo.h"
 
-void ChunkInfo::GenerateChunk(int xStart, int yStart, int resolution, float chunkSize, float(*curve)(float)) {
+void ChunkInfo::GenerateChunk(int xStart, int yStart, int resolution, float chunkSize, FastNoise* ptrToNoise, UCurveFloat* curve, float heightScale) {
 	float vertexDistance = 64 / resolution;
 	float heightMapLength = chunkSize / vertexDistance + 1;
 	int resolutionFactor = 4096 / heightMapLength;
 
+	noiseGen = ptrToNoise;
+
 	heightmapDistanceTraversed = (heightMapLength - 1) * resolutionFactor;
 
 	TArray<TArray<float>> heightmap;
-	heightmap = generateHeightmap(xStart, yStart, resolutionFactor, heightMapLength, curve);
+	heightmap = generateHeightmap(xStart, yStart, resolutionFactor, heightMapLength, curve, heightScale);
 	vertices = generateVertices(heightmap, vertexDistance);
 	triangles = generateTriangles(heightMapLength, heightMapLength);
 	normals = generateNormals(vertices, heightmap, heightMapLength, heightMapLength, vertexDistance);
@@ -39,6 +41,7 @@ TArray<FProcMeshTangent> ChunkInfo::GetTangents() {
 	return tangents;
 }
 
+
 int ChunkInfo::GetDistanceTraversed() {
 	return heightmapDistanceTraversed;
 }
@@ -55,13 +58,13 @@ int ChunkInfo::GetDistanceTraversed() {
 *   \return The heightmap for the chunk at (xStart, yStart)
 *
 **/
-TArray<TArray<float>> ChunkInfo::generateHeightmap(int xStart, int yStart, int resolutionFactor, int heightMapLength, float (*curve)(float)) {
+TArray<TArray<float>> ChunkInfo::generateHeightmap(int xStart, int yStart, int resolutionFactor, int heightMapLength, UCurveFloat* curve, float heightScale) {
 	TArray<TArray<float>> xArray;
 
 	for (int x = xStart; x < xStart + (heightMapLength + 2) * resolutionFactor; x += resolutionFactor) {
 		TArray<float> yArray;
 		for (int y = yStart; y < yStart + (heightMapLength + 2) * resolutionFactor; y += resolutionFactor) {
-			yArray.Add((*curve)(noiseGen->GetNoise(x, y)));
+			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(x, y))*heightScale);
 		}
 		xArray.Add(yArray);
 	}

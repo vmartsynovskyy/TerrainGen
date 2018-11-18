@@ -3,6 +3,7 @@
 #pragma once
 #include "FastNoise.h"
 #include "ChunkInfo.h"
+#include "ChunkInfoWorker.h"
 
 #include "ProceduralMeshComponent.h"
 
@@ -44,10 +45,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 private:
+	TMap<TPair<int, int>, ChunkInfo> infoMap;
 	TMap<TPair<int, int>, UProceduralMeshComponent*> chunkMap;
 	FastNoise noiseGen;
 	int seed;
 	int heightmapLen = 0;
 	void spawnChunk(int x, int y);
 	void cullAndSpawnChunks(FVector2D playerLocation);
+	ChunkInfoWorker infoWorker;
+	FRunnableThread* infoWorkerThread;
 };

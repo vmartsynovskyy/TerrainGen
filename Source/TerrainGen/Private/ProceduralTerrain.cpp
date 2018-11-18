@@ -15,6 +15,24 @@ AProceduralTerrain::AProceduralTerrain()
 void AProceduralTerrain::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FastNoise* noise = new FastNoise();
+	FVector playerLoc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	noise->SetSeed(seed);
+	noise->SetNoiseType(FastNoise::SimplexFractal);
+	noise->SetFrequency(0.000625 * WidthScale);
+	noise->SetFractalOctaves(6);
+	infoWorker.Resolution = ChunkResolution;
+	infoWorker.infoMapPtr = &infoMap;
+	infoWorker.playerPos = playerLoc;
+	infoWorker.GenerateRadius = RenderRadius*2;
+	infoWorker.ChunkSize = ChunkSize;
+	infoWorker.PtrToNoise = noise;
+	infoWorker.Curve = TerrainCurve;
+	infoWorker.HeightScale = HeightScale;
+
+	infoWorkerThread = FRunnableThread::Create(&infoWorker, TEXT("ChunkInfoWorker"), 0, TPri_BelowNormal);
+	/// \todo{ Kill the thread on endplay }
 }
 
 // Called every frame
@@ -28,19 +46,14 @@ void AProceduralTerrain::Tick(float DeltaTime)
 void AProceduralTerrain::spawnChunk(int x, int y) {
 	// first, check if this chunk has already been spawned
 	TPair<int, int> chunkPos(x, y);
-	if (!chunkMap.Contains(chunkPos)) {
+	if (!chunkMap.Contains(chunkPos) && infoMap.Contains(chunkPos)) {
+		// get cached chunk info
+		ChunkInfo* chunkInfo = infoMap.Find(chunkPos);
+
 		auto procMesh = NewObject<UProceduralMeshComponent>(this);
-		FastNoise noiseGen;
-		noiseGen.SetSeed(seed);
-		noiseGen.SetNoiseType(FastNoise::SimplexFractal);
-		noiseGen.SetFrequency(0.000625 * WidthScale);
-		noiseGen.SetFractalOctaves(6);
-		ChunkInfo chunkInfo;
-		chunkInfo.GenerateChunk(x*(heightmapLen - 1), y*(heightmapLen - 1), ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale);
-		heightmapLen = chunkInfo.GetDistanceTraversed();
-		auto world = this->GetWorld();
+		auto world = GetWorld();
 		procMesh->SetWorldLocation(FVector(x*ChunkSize, y*ChunkSize, 0));
-		procMesh->CreateMeshSection_LinearColor(0, chunkInfo.GetVertices(), chunkInfo.GetTriangles(), chunkInfo.GetNormals(), chunkInfo.GetUVMap(), chunkInfo.GetColors(), chunkInfo.GetTangents(), false);
+		procMesh->CreateMeshSection_LinearColor(0, chunkInfo->GetVertices(), chunkInfo->GetTriangles(), chunkInfo->GetNormals(), chunkInfo->GetUVMap(), chunkInfo->GetColors(), chunkInfo->GetTangents(), false);
 		procMesh->SetMaterial(0, TerrainMaterial);
 		procMesh->RegisterComponentWithWorld(world);
 		chunkMap.Add(TPair<int, int>(x, y), procMesh);

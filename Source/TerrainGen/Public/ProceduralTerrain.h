@@ -22,11 +22,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	float HeightScale = 256.0f;
 	UPROPERTY(EditAnywhere)
+	float WidthScale = 1.0f;
+	UPROPERTY(EditAnywhere)
 	int ChunkResolution = 4;
 	UPROPERTY(EditAnywhere)
 	float RenderRadius = 10000.0f;
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* TerrainMaterial;
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* TerrainCurve;
 
 protected:
 	// Called when the game starts or when spawned

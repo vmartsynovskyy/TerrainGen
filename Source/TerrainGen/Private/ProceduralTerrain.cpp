@@ -36,9 +36,13 @@ void AProceduralTerrain::spawnChunk(int x, int y) {
 		int hMapLen = chunk->SetSizeAndResolution(ChunkSize, ChunkResolution);
 		chunk->SetXandYStart(x*(hMapLen-1), y*(hMapLen-1));
 		chunk->Seed = seed;
-		chunk->heightScale = HeightScale;
+		chunk->HeightScale = HeightScale;
+		chunk->WidthScale = WidthScale;
 		chunk->SetMaterialForProcMesh(TerrainMaterial);
+		chunk->TerrainCurve = TerrainCurve;
+
 		chunk->CreateRandomMeshComponent();
+
 		chunk->FinishSpawning(spawnTransform);
 		chunkMap.Add(TPair<int, int>(x, y), chunk);
 	}
@@ -71,13 +75,14 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 		float distanceFromPlayerSquare = powf((Elem.Key.Key*ChunkSize - playerLocation.X), 2) + powf((Elem.Key.Value*ChunkSize - playerLocation.Y), 2);
 		// destroy chunk if its further than the render radius
 		if ((distanceFromPlayerSquare + 10000.0f) > renderRadiusSquare) {
-			Elem.Value->Destroy();
 			chunksToRemove.Add(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
 		}
 	}
 
 	for (auto chunk : chunksToRemove) {
+		AProceduralTerrainChunk* chunkPtr = *(chunkMap.Find(chunk));
 		chunkMap.Remove(chunk);
+		chunkPtr->Destroy();
 	}
 
 	chunkMap.Compact();

@@ -16,6 +16,7 @@ AProceduralTerrainChunk::AProceduralTerrainChunk()
 }
 
 void AProceduralTerrainChunk::Destroyed() {
+	procMesh->ClearMeshSection(0);
 	procMesh->DestroyComponent();
 }
 
@@ -25,12 +26,13 @@ TArray<TArray<float>> AProceduralTerrainChunk::generateHeightmap(int width, int 
 	FastNoise myNoise;
 	myNoise.SetSeed(Seed);
 	myNoise.SetNoiseType(FastNoise::SimplexFractal);
-	myNoise.SetFrequency(0.000625);
+	myNoise.SetFrequency(0.000625 * WidthScale);
+	myNoise.SetFractalOctaves(6);
 
 	for (int x = xStart; x < xStart + (heightMapLength+2) * resolutionFactor; x += resolutionFactor) {
 		TArray<float> yArray;
 		for (int y = yStart; y < yStart + (heightMapLength+2) * resolutionFactor; y += resolutionFactor) {
-			yArray.Add(myNoise.GetNoise(x, y) * heightScale);
+			yArray.Add(TerrainCurve->GetFloatValue(myNoise.GetNoise(x, y)) * HeightScale);
 		}
 		xArray.Add(yArray);
 	}
@@ -52,7 +54,7 @@ TArray<FVector> AProceduralTerrainChunk::generateVertices(TArray<TArray<float>> 
 	TArray<FVector> vertices;
 	for (int x = 1; x < heightmap.Num() - 1; x++) {
 		for (int y = 1; y < heightmap[0].Num() - 1; y++) {
-			vertices.Add(FVector((x-1)*widthScale, (y-1)*widthScale, heightmap[x][y]));
+			vertices.Add(FVector((x-1)*vertexDistance, (y-1)*vertexDistance, heightmap[x][y]));
 		}
 	}
 	return vertices;
@@ -83,12 +85,12 @@ TArray<FVector> AProceduralTerrainChunk::generateNormals(TArray<FVector> verts, 
 			// in order to have seamless edges
 			// if it's in bounds then we can just use the vertices we already generated
 			FVector centerVert = verts[centerInd];
-			FVector leftVert = (x - 1 > 0 && x - 1 < width) ? verts[leftInd] : FVector((x-1)*widthScale, (y)*widthScale, hMap[x][y+1]);
-			FVector rightVert = (x + 1 > 0 && x + 1 < width) ? verts[rightInd] : FVector((x+1)*widthScale, (y)*widthScale, hMap[x+2][y+1]);
-			FVector topRightVert = (x + 1 > 0 && x + 1 < width && y - 1 > 0 && y - 1 < height) ? verts[topRightInd] : FVector((x+1)*widthScale, (y-1)*widthScale, hMap[x+2][y]);
-			FVector bottomLeftVert = (x - 1 > 0 && x - 1 < width && y + 1 > 0 && y + 1 < height) ? verts[bottomLeftInd] : FVector((x-1)*widthScale, (y+1)*widthScale, hMap[x][y+2]);
-			FVector topVert = (y - 1 > 0 && y - 1 < height) ? verts[topInd] : FVector((x)*widthScale, (y-1)*widthScale, hMap[x+1][y]);
-			FVector bottomVert = (y + 1 > 0 && y + 1 < height) ? verts[bottomInd] : FVector((x)*widthScale, (y+1)*widthScale, hMap[x+1][y+2]);
+			FVector leftVert = (x - 1 > 0 && x - 1 < width) ? verts[leftInd] : FVector((x-1)*vertexDistance, (y)*vertexDistance, hMap[x][y+1]);
+			FVector rightVert = (x + 1 > 0 && x + 1 < width) ? verts[rightInd] : FVector((x+1)*vertexDistance, (y)*vertexDistance, hMap[x+2][y+1]);
+			FVector topRightVert = (x + 1 > 0 && x + 1 < width && y - 1 > 0 && y - 1 < height) ? verts[topRightInd] : FVector((x+1)*vertexDistance, (y-1)*vertexDistance, hMap[x+2][y]);
+			FVector bottomLeftVert = (x - 1 > 0 && x - 1 < width && y + 1 > 0 && y + 1 < height) ? verts[bottomLeftInd] : FVector((x-1)*vertexDistance, (y+1)*vertexDistance, hMap[x][y+2]);
+			FVector topVert = (y - 1 > 0 && y - 1 < height) ? verts[topInd] : FVector((x)*vertexDistance, (y-1)*vertexDistance, hMap[x+1][y]);
+			FVector bottomVert = (y + 1 > 0 && y + 1 < height) ? verts[bottomInd] : FVector((x)*vertexDistance, (y+1)*vertexDistance, hMap[x+1][y+2]);
 			
 
 			// we calculate the normals of each side, sum them, and normalize to get normal vectors for a vertex
@@ -195,8 +197,8 @@ void AProceduralTerrainChunk::CreateRandomMeshComponent()
 *
 **/
 int AProceduralTerrainChunk::SetSizeAndResolution(float width, int resolution = 4) {
-	widthScale = 64 / resolution;
-	heightMapLength = width / widthScale + 1;
+	vertexDistance = 64 / resolution;
+	heightMapLength = width / vertexDistance + 1;
 	resolutionFactor = 4096 / heightMapLength;
 	return (heightMapLength-1) * resolutionFactor;
 }

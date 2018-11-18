@@ -25,15 +25,20 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UProceduralMeshComponent* procMesh;
 
-	float widthScale = 10.0f;
+	float vertexDistance = 10.0f;
 
 	int resolutionFactor = 1;
 
 public:
 	int Seed = 1337;
 
-	UPROPERTY(EditAnywhere)
-	float heightScale = 100.0f;
+	float WidthScale = 1.0f;
+
+	UPROPERTY(VisibleAnywhere)
+	float HeightScale = 100.0f;
+
+	UPROPERTY(VisibleAnywhere)
+	UCurveFloat* TerrainCurve;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

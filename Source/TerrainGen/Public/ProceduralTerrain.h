@@ -49,12 +49,5 @@ private:
 	int seed;
 	int heightmapLen = 0;
 	void spawnChunk(int x, int y);
-	void destroyChunk(UProceduralMeshComponent* chunk);
 	void cullAndSpawnChunks(FVector2D playerLocation);
-
-	// Functions used for generating a single "chunk"
-	TArray<TArray<float>> generateHeightmap(int xStart, int yStart, int resolutionFactor, int heightMapLength);
-	TArray<FVector> generateVertices(TArray<TArray<float>> heightmap, float vertexDistance);
-	TArray<FVector> generateNormals(TArray<FVector> verts, TArray<TArray<float>> hMap, int width, int height, float vertexDistance);
-	TArray<FVector2D> generateUV(int width, int height);
 };

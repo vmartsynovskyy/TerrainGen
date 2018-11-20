@@ -3,60 +3,63 @@
 #include "ProceduralTerrain.h"
 
 // Sets default values
-AProceduralTerrain::AProceduralTerrain()
-{
+AProceduralTerrain::AProceduralTerrain() {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	seed = rand();
+
+	noiseGen.SetSeed(seed);
+	noiseGen.SetNoiseType(FastNoise::SimplexFractal);
+	noiseGen.SetFractalOctaves(6);
 }
 
 // Called when the game starts or when spawned
-void AProceduralTerrain::BeginPlay()
-{
+void AProceduralTerrain::BeginPlay() {
 	Super::BeginPlay();
 
-	FastNoise* noise = new FastNoise();
-	FVector playerLoc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	noise->SetSeed(seed);
-	noise->SetNoiseType(FastNoise::SimplexFractal);
-	noise->SetFrequency(0.000625 * WidthScale);
-	noise->SetFractalOctaves(6);
-	infoWorker.Resolution = ChunkResolution;
+	noiseGen.SetFrequency(0.000625 * WidthScale);
+	infoWorker = ChunkInfoWorker(ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale));
 	infoWorker.infoMapPtr = &infoMap;
-	infoWorker.playerPos = playerLoc;
-	infoWorker.GenerateRadius = RenderRadius*2;
-	infoWorker.ChunkSize = ChunkSize;
-	infoWorker.PtrToNoise = noise;
-	infoWorker.Curve = TerrainCurve;
-	infoWorker.HeightScale = HeightScale;
+	infoWorker.GenerateRadius = RenderRadius * 1.50;
+
+	infoWorker.Params.TerrainCurve = TerrainCurve;
+	infoWorker.playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	infoWorker.ChunkDeletion = &ChunkDeletion;
 
 	infoWorkerThread = FRunnableThread::Create(&infoWorker, TEXT("ChunkInfoWorker"), 0, TPri_BelowNormal);
-	/// \todo{ Kill the thread on endplay }
+}
+
+void AProceduralTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	infoWorkerThread->Kill(true);
 }
 
 // Called every frame
-void AProceduralTerrain::Tick(float DeltaTime)
-{
-	FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	cullAndSpawnChunks(FVector2D(playerPos));
+void AProceduralTerrain::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
+
+	FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	infoWorker.playerPos = playerPos;
+	cullAndSpawnChunks(FVector2D(playerPos));
 }
 
 void AProceduralTerrain::spawnChunk(int x, int y) {
 	// first, check if this chunk has already been spawned
 	TPair<int, int> chunkPos(x, y);
-	if (!chunkMap.Contains(chunkPos) && infoMap.Contains(chunkPos)) {
-		// get cached chunk info
-		ChunkInfo* chunkInfo = infoMap.Find(chunkPos);
+	{
+		FScopeLock LockWhileSpawning(&ChunkDeletion);
+		if (!chunkMap.Contains(chunkPos) && infoMap.Contains(chunkPos)) {
+			// get cached chunk info
+			ChunkInfo* chunkInfo = infoMap.Find(chunkPos);
 
-		auto procMesh = NewObject<UProceduralMeshComponent>(this);
-		auto world = GetWorld();
-		procMesh->SetWorldLocation(FVector(x*ChunkSize, y*ChunkSize, 0));
-		procMesh->CreateMeshSection_LinearColor(0, chunkInfo->GetVertices(), chunkInfo->GetTriangles(), chunkInfo->GetNormals(), chunkInfo->GetUVMap(), chunkInfo->GetColors(), chunkInfo->GetTangents(), false);
-		procMesh->SetMaterial(0, TerrainMaterial);
-		procMesh->RegisterComponentWithWorld(world);
-		chunkMap.Add(TPair<int, int>(x, y), procMesh);
+			auto procMesh = NewObject<UProceduralMeshComponent>(this);
+			auto world = GetWorld();
+			procMesh->SetWorldLocation(FVector(x*ChunkSize, y*ChunkSize, 0));
+			procMesh->CreateMeshSection_LinearColor(0, chunkInfo->GetVertices(), chunkInfo->GetTriangles(), chunkInfo->GetNormals(), chunkInfo->GetUVMap(), chunkInfo->GetColors(), chunkInfo->GetTangents(), false);
+			procMesh->SetMaterial(0, TerrainMaterial);
+			procMesh->RegisterComponentWithWorld(world);
+			chunkMap.Add(TPair<int, int>(x, y), procMesh);
+		}
 	}
 }
 
@@ -94,6 +97,7 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 	for (auto chunk : chunksToRemove) {
 		auto chunkPtr = *(chunkMap.Find(chunk));
 		chunkMap.Remove(chunk);
+		chunkPtr->UnregisterComponent();
 		chunkPtr->DestroyComponent();
 	}
 

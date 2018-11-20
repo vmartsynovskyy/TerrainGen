@@ -28,7 +28,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	float WidthScale = 1.0f;
 	UPROPERTY(EditAnywhere)
-	int ChunkResolution = 4;
+	int ChunkResolution = 4.0f;
 	UPROPERTY(EditAnywhere)
 	float RenderRadius = 10000.0f;
 	UPROPERTY(EditAnywhere)
@@ -36,9 +36,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	UCurveFloat* TerrainCurve;
 
+	FCriticalSection ChunkDeletion;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 public:	

@@ -1,13 +1,14 @@
 #pragma once
 
 #include "ProceduralMeshComponent.h"
+#include "ChunkGenParams.h"
 #include "FastNoise.h"
 #include "CoreMinimal.h"
 #include "Engine.h"
 
 class ChunkInfo {
 public:
-	void GenerateChunk(int xStart, int yStart, int resolution, float chunkSize, FastNoise* ptrToNoise, UCurveFloat* TerrainCurve, float heightScale);
+	void GenerateChunk(int xStart, int yStart, ChunkGenParams params);
 	TArray<FVector> GetVertices();
 	TArray<int32> GetTriangles();
 	TArray<FVector> GetNormals();

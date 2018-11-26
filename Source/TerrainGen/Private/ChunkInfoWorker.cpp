@@ -54,8 +54,8 @@ void ChunkInfoWorker::createChunkInfo(int x, int y) {
 	TPair<int, int> chunkPos(x, y);
 	if (!(infoMapPtr->Contains(chunkPos))) {
 		ChunkInfo chunk;
-		chunk.GenerateChunk(x*(heightMapLen - 1), y*(heightMapLen - 1), Params);
-		heightMapLen = chunk.GetDistanceTraversed();
+		chunk.GenerateChunk(x*heightMapDist, y*heightMapDist, Params);
+		heightMapDist = chunk.GetDistanceTraversed();
 		infoMapPtr->Add(chunkPos, chunk);
 	}
 }

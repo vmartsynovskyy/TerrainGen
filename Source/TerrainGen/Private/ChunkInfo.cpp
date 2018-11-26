@@ -1,16 +1,13 @@
 #include "ChunkInfo.h"
 
 void ChunkInfo::GenerateChunk(int xStart, int yStart, ChunkGenParams params) {
-	float vertexDistance = 64 / params.Resolution;
-	float heightMapLength = params.Size / vertexDistance + 1;
-	int resolutionFactor = 4096 / heightMapLength;
+	int heightMapLength = 4096 / params.Resolution + 1;
+	float vertexDistance = params.Size / (heightMapLength - 1);
 
 	noiseGen = params.PtrToNoise;
 
-	heightmapDistanceTraversed = (heightMapLength - 1) * resolutionFactor;
-
 	TArray<TArray<float>> heightmap;
-	heightmap = generateHeightmap(xStart, yStart, resolutionFactor, heightMapLength, params.TerrainCurve, params.HeightScale);
+	heightmap = generateHeightmap(xStart-1, yStart-1, params.Resolution, heightMapLength, params.TerrainCurve, params.HeightScale);
 	vertices = generateVertices(heightmap, vertexDistance);
 	triangles = generateTriangles(heightMapLength, heightMapLength);
 	normals = generateNormals(vertices, heightmap, heightMapLength, heightMapLength, vertexDistance);
@@ -61,13 +58,17 @@ int ChunkInfo::GetDistanceTraversed() {
 TArray<TArray<float>> ChunkInfo::generateHeightmap(int xStart, int yStart, int resolutionFactor, int heightMapLength, UCurveFloat* curve, float heightScale) {
 	TArray<TArray<float>> xArray;
 
+	int lastHmap = 0;
 	for (int x = xStart; x < xStart + (heightMapLength + 2) * resolutionFactor; x += resolutionFactor) {
 		TArray<float> yArray;
 		for (int y = yStart; y < yStart + (heightMapLength + 2) * resolutionFactor; y += resolutionFactor) {
+			lastHmap = x;
 			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(x, y))*heightScale);
 		}
 		xArray.Add(yArray);
 	}
+
+	heightmapDistanceTraversed = lastHmap - xStart - 2*resolutionFactor;
 	return xArray;
 }
 

@@ -20,7 +20,7 @@ public:
 	FCriticalSection* ChunkDeletion;
 	bool KeepGenerating = true;
 private:
-	int heightMapLen = 0;
+	int heightMapDist = 0;
 	void createChunkInfo(int x, int y);
 	void destroyChunkInfo(int x, int y);
 };

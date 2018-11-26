@@ -18,7 +18,7 @@ AProceduralTerrain::AProceduralTerrain() {
 void AProceduralTerrain::BeginPlay() {
 	Super::BeginPlay();
 
-	noiseGen.SetFrequency(0.000625 * WidthScale);
+	noiseGen.SetFrequency(0.000625 * WidthScale * (ChunkSize / 2048.0));
 	infoWorker = ChunkInfoWorker(ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale));
 	infoWorker.infoMapPtr = &infoMap;
 	infoWorker.GenerateRadius = RenderRadius * 1.50;

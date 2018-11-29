@@ -2,7 +2,9 @@
 
 A procedural terrain generator for Unreal Engine 4.
 
-[//]: # (TODO: Put a video here)
+![Short gif of TerrainGen](https://media.giphy.com/media/2uIcDbw2Lib8WEmZtW/giphy.gif)
+
+(This gif is in terrible quality because I had to compress it down to 5 MB)
 
 [//]: # (TODO: include a description of how it works)
 

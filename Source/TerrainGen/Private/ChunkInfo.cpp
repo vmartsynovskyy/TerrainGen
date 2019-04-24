@@ -1,7 +1,9 @@
 #include "ChunkInfo.h"
 
 void ChunkInfo::GenerateChunk(int xStart, int yStart, ChunkGenParams params) {
+	// The generated heightmap's dimensions will be heightMapLength x heightMapLength
 	int heightMapLength = 4096 / params.Resolution + 1;
+	// The distance between vertices in world units
 	float vertexDistance = params.Size / (heightMapLength - 1);
 
 	noiseGen = params.PtrToNoise;
@@ -63,7 +65,8 @@ TArray<TArray<float>> ChunkInfo::generateHeightmap(int xStart, int yStart, int r
 		TArray<float> yArray;
 		for (int y = yStart; y < yStart + (heightMapLength + 2) * resolutionFactor; y += resolutionFactor) {
 			lastHmap = x;
-			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(x, y))*heightScale);
+			// Applies the TerrainCurve and heightScale
+			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(x/resolutionFactor, y/resolutionFactor))*heightScale);
 		}
 		xArray.Add(yArray);
 	}

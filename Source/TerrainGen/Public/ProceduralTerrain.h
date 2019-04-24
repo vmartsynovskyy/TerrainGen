@@ -22,19 +22,19 @@ public:
 	AProceduralTerrain();
 
 	UPROPERTY(EditAnywhere)
-	float ChunkSize = 256.0f;
+	float ChunkSize = 256.0f; ///< The size of a chunk in world units
 	UPROPERTY(EditAnywhere)
-	float HeightScale = 256.0f;
+	float HeightScale = 256.0f; ///< The height scaling constant used to scale heightmap form -1 to 1 to -HeightScale to HeightScale
 	UPROPERTY(EditAnywhere)
-	float WidthScale = 1.0f;
+	float WidthScale = 1.0f; ///< A multiplier for chunk width
 	UPROPERTY(EditAnywhere)
-	int ChunkResolution = 4.0f;
+	int ChunkResolution = 4; ///< The number of heightmap entries to go up by for each vertex
 	UPROPERTY(EditAnywhere)
-	float RenderRadius = 10000.0f;
+	float RenderRadius = 10000.0f; ///< The radius around which to render chunks in world units
 	UPROPERTY(EditAnywhere)
-	UMaterialInterface* TerrainMaterial;
+	UMaterialInterface* TerrainMaterial; ///< The material to be used for the terrain
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* TerrainCurve;
+	UCurveFloat* TerrainCurve; ///< A function that will transform heightmap values
 
 	FCriticalSection ChunkDeletion;
 

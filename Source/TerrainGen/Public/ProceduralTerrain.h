@@ -41,6 +41,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	ChunkGenParams GetParams();
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 

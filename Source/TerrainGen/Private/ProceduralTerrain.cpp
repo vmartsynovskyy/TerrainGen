@@ -19,7 +19,7 @@ void AProceduralTerrain::BeginPlay() {
 	Super::BeginPlay();
 
 	noiseGen.SetFrequency(0.000625 * WidthScale * (ChunkSize / 2048.0));
-	infoWorker = ChunkInfoWorker(ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale));
+	infoWorker = ChunkInfoWorker(GetParams());
 	infoWorker.infoMapPtr = &infoMap;
 	infoWorker.GenerateRadius = RenderRadius * 1.50;
 
@@ -28,6 +28,10 @@ void AProceduralTerrain::BeginPlay() {
 	infoWorker.ChunkDeletion = &ChunkDeletion;
 
 	infoWorkerThread = FRunnableThread::Create(&infoWorker, TEXT("ChunkInfoWorker"), 0, TPri_BelowNormal);
+}
+
+ChunkGenParams AProceduralTerrain::GetParams() {
+	return ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale);
 }
 
 void AProceduralTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason) {

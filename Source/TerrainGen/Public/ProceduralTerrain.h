@@ -21,20 +21,27 @@ public:
 	// Sets default values for this actor's properties
 	AProceduralTerrain();
 
+	/// The size of a chunk in world units
 	UPROPERTY(EditAnywhere)
-	float ChunkSize = 256.0f; ///< The size of a chunk in world units
+	float ChunkSize = 4096.0f;
+	/// The scale ratio of height to width
 	UPROPERTY(EditAnywhere)
-	float HeightScale = 256.0f; ///< The height scaling constant used to scale heightmap form -1 to 1 to -HeightScale to HeightScale
+	float HeightToWidthRatio = 1.25f;
+	/// The scale factor of the terrain
 	UPROPERTY(EditAnywhere)
-	float WidthScale = 1.0f; ///< A multiplier for chunk width
+	float Scale = 256.0f;
+	/// The number of samples of the heightmap per 256 world units
 	UPROPERTY(EditAnywhere)
-	int ChunkResolution = 4; ///< The number of heightmap entries to go up by for each vertex
+	int ChunkResolution = 8;
+	/// The radius around which to render chunks in world units
 	UPROPERTY(EditAnywhere)
-	float RenderRadius = 10000.0f; ///< The radius around which to render chunks in world units
+	float RenderRadius = 30000.0f;
+	/// The material to be used for the terrain
 	UPROPERTY(EditAnywhere)
-	UMaterialInterface* TerrainMaterial; ///< The material to be used for the terrain
+	UMaterialInterface* TerrainMaterial;
+	/// A function that will transform heightmap values
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* TerrainCurve; ///< A function that will transform heightmap values
+	UCurveFloat* TerrainCurve;
 
 	FCriticalSection ChunkDeletion;
 
@@ -56,6 +63,10 @@ private:
 	int heightmapLen = 0;
 	void spawnChunk(int x, int y);
 	void cullAndSpawnChunks(FVector2D playerLocation);
+	/// The height scaling constant used to scale heightmap form -1 to 1 to -HeightScale to HeightScale
+	float heightScale;
+	/// A multiplier for chunk width
+	float frequency;
 	ChunkInfoWorker infoWorker;
 	FRunnableThread* infoWorkerThread;
 };

@@ -1,15 +1,16 @@
 #include "ChunkInfo.h"
 
-void ChunkInfo::GenerateChunk(int xStart, int yStart, ChunkGenParams params) {
-	// The generated heightmap's dimensions will be heightMapLength x heightMapLength
-	int heightMapLength = 4096 / params.Resolution + 1;
+void ChunkInfo::GenerateChunk(float xStart, float yStart, ChunkGenParams params) {
 	// The distance between vertices in world units
-	float vertexDistance = params.Size / (heightMapLength - 1);
+	float vertexDistance = 256 / params.Resolution;
+
+	// The generated heightmap's dimensions will be heightMapLength x heightMapLength
+	int heightMapLength = params.Size / vertexDistance + 1;
 
 	noiseGen = params.PtrToNoise;
 
 	TArray<TArray<float>> heightmap;
-	heightmap = generateHeightmap(xStart-1, yStart-1, params.Resolution, heightMapLength, params.TerrainCurve, params.HeightScale);
+	heightmap = generateHeightmap(xStart, yStart, vertexDistance, heightMapLength, params.TerrainCurve, params.HeightScale);
 	vertices = generateVertices(heightmap, vertexDistance);
 	triangles = generateTriangles(heightMapLength, heightMapLength);
 	normals = generateNormals(vertices, heightmap, heightMapLength, heightMapLength, vertexDistance);
@@ -57,21 +58,24 @@ int ChunkInfo::GetDistanceTraversed() {
 *   \return The heightmap for the chunk at (xStart, yStart)
 *
 **/
-TArray<TArray<float>> ChunkInfo::generateHeightmap(int xStart, int yStart, int resolutionFactor, int heightMapLength, UCurveFloat* curve, float heightScale) {
+TArray<TArray<float>> ChunkInfo::generateHeightmap(float xStart, float yStart, float vertexDistance, int heightMapLength, UCurveFloat* curve, float heightScale) {
 	TArray<TArray<float>> xArray;
 
-	int lastHmap = 0;
-	for (int x = xStart; x < xStart + (heightMapLength + 2) * resolutionFactor; x += resolutionFactor) {
+	float currX = xStart - vertexDistance;
+	for (int i = 0; i < heightMapLength + 2; i++) {
 		TArray<float> yArray;
-		for (int y = yStart; y < yStart + (heightMapLength + 2) * resolutionFactor; y += resolutionFactor) {
-			lastHmap = x;
+		float currY = yStart - vertexDistance;
+		for (int j = 0; j < heightMapLength + 2; j++) {
 			// Applies the TerrainCurve and heightScale
-			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(x/resolutionFactor, y/resolutionFactor))*heightScale);
+			yArray.Add(curve->GetFloatValue(noiseGen->GetNoise(currX, currY))*heightScale);
+			currY += vertexDistance;
 		}
+		currX += vertexDistance;
 		xArray.Add(yArray);
 	}
 
-	heightmapDistanceTraversed = lastHmap - xStart - 2*resolutionFactor;
+	// subtract 1 since we want the number of "edges" not the number of "vertices"
+	heightmapDistanceTraversed = vertexDistance*(heightMapLength - 1);
 	return xArray;
 }
 

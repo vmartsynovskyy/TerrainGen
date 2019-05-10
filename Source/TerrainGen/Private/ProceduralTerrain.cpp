@@ -18,7 +18,10 @@ AProceduralTerrain::AProceduralTerrain() {
 void AProceduralTerrain::BeginPlay() {
 	Super::BeginPlay();
 
-	noiseGen.SetFrequency(0.000625 * WidthScale * (ChunkSize / 2048.0));
+	frequency = 256 / Scale;
+	heightScale = Scale * HeightToWidthRatio;
+
+	noiseGen.SetFrequency(0.0000625*frequency/16);
 	infoWorker = ChunkInfoWorker(GetParams());
 	infoWorker.infoMapPtr = &infoMap;
 	infoWorker.GenerateRadius = RenderRadius * 1.50;
@@ -31,7 +34,7 @@ void AProceduralTerrain::BeginPlay() {
 }
 
 ChunkGenParams AProceduralTerrain::GetParams() {
-	return ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, HeightScale);
+	return ChunkGenParams(ChunkResolution, ChunkSize, &noiseGen, TerrainCurve, heightScale);
 }
 
 void AProceduralTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -98,11 +101,14 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 		}
 	}
 
-	for (auto chunk : chunksToRemove) {
-		auto chunkPtr = *(chunkMap.Find(chunk));
-		chunkMap.Remove(chunk);
-		chunkPtr->UnregisterComponent();
-		chunkPtr->DestroyComponent();
+	{
+		FScopeLock LockWhileRemoving(&ChunkDeletion);
+		for (auto chunk : chunksToRemove) {
+			auto chunkPtr = *(chunkMap.Find(chunk));
+			chunkMap.Remove(chunk);
+			chunkPtr->UnregisterComponent();
+			chunkPtr->DestroyComponent();
+		}
 	}
 
 	chunkMap.Compact();
@@ -111,8 +117,18 @@ void AProceduralTerrain::cullAndSpawnChunks(FVector2D playerLocation) {
 
 void AProceduralTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) {
 	// destroy all chunks so that they can be regenerated with new properties
-	for (auto& Elem : chunkMap) {
-		Elem.Value->DestroyComponent();
-		chunkMap.Remove(TPair<int, int>(Elem.Key.Key, Elem.Key.Value));
+	frequency = 256 / Scale;
+	heightScale = Scale * HeightToWidthRatio;
+	UE_LOG(LogTemp, Log, TEXT("Property changed"));
+	infoWorker.Params = GetParams();
+	infoWorker.GenerateRadius = RenderRadius * 1.50;
+	{
+		FScopeLock LockWhileRemoving(&ChunkDeletion);
+		for (auto& Elem : chunkMap) {
+			Elem.Value->UnregisterComponent();
+			Elem.Value->DestroyComponent();
+		}
+		chunkMap.Empty();
+		infoMap.Empty();
 	}
 }
